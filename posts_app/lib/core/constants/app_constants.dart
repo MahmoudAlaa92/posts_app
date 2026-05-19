@@ -1,7 +1,9 @@
 class AppConstants {
-  // API
-  static const String baseUrl = 'https://jsonplaceholder.typicode.com';
-  static const int connectTimeout = 15000; // ms
+  // API — swap baseUrl to switch between mock and real
+  static const bool useMockBackend = true; // set false to use real API
+  static const String baseUrl = 'https://dummyjson.com'; // used when useMockBackend = false
+
+  static const int connectTimeout = 15000;
   static const int receiveTimeout = 15000;
 
   // Hive Boxes
@@ -13,11 +15,7 @@ class AppConstants {
   static const String userEmailKey = 'user_email';
   static const String cachedPostsKey = 'cached_posts';
 
-  // Mock credentials
-  static const String mockEmail = 'test@example.com';
-  static const String mockPassword = 'password123';
-  static const String mockToken = 'mock_jwt_token_xyz';
-
-  // Misc
-  static const int postsPerPage = 10;
+  // Credentials (for demo hint in UI)
+  static const String mockUsername = 'emilys';
+  static const String mockPassword = 'emilyspass';
 }
