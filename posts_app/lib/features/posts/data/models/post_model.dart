@@ -10,7 +10,7 @@ class PostModel extends PostEntity {
 
   factory PostModel.fromJson(Map<String, dynamic> json) => PostModel(
         id: json['id'] as int,
-        userId: json['userId'] as int,
+        userId: (json['userId'] ?? 1) as int,
         title: json['title'] as String,
         body: json['body'] as String,
       );
@@ -21,11 +21,4 @@ class PostModel extends PostEntity {
         'title': title,
         'body': body,
       };
-
-  factory PostModel.fromEntity(PostEntity entity) => PostModel(
-        id: entity.id,
-        userId: entity.userId,
-        title: entity.title,
-        body: entity.body,
-      );
 }

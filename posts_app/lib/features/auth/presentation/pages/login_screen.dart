@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/router/app_router.dart';
 import '../bloc/auth_bloc.dart';
@@ -15,13 +16,13 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -30,7 +31,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_formKey.currentState?.validate() ?? false) {
       context.read<AuthBloc>().add(
             LoginRequested(
-              email: _emailController.text.trim(),
+              username: _usernameController.text.trim(),
               password: _passwordController.text.trim(),
             ),
           );
@@ -67,7 +68,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 48),
-                  // Header
                   Center(
                     child: Container(
                       width: 80,
@@ -93,12 +93,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 8),
                   Text(
                     'Sign in to continue',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.grey,
-                        ),
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.copyWith(color: Colors.grey),
                   ),
                   const SizedBox(height: 32),
-                  // Hint box
+
+                  // Demo hint
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
@@ -113,41 +115,41 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'Demo: test@example.com / password123',
+                            'Demo: ${AppConstants.mockUsername} / ${AppConstants.mockPassword}',
                             style: TextStyle(
-                                color: Colors.blue.shade700, fontSize: 12),
+                              color: Colors.blue.shade700,
+                              fontSize: 12,
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 24),
-                  // Form
+
                   Form(
                     key: _formKey,
                     child: Column(
                       children: [
+                        // Username field
                         TextFormField(
-                          controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
+                          controller: _usernameController,
                           textInputAction: TextInputAction.next,
                           decoration: const InputDecoration(
-                            labelText: AppStrings.email,
-                            hintText: AppStrings.emailHint,
-                            prefixIcon: Icon(Icons.email_outlined),
+                            labelText: 'Username',
+                            hintText: 'Enter your username',
+                            prefixIcon: Icon(Icons.person_outline),
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
+                          validator: (v) {
+                            if (v == null || v.isEmpty) {
                               return AppStrings.fieldRequired;
-                            }
-                            if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                                .hasMatch(value)) {
-                              return 'Enter a valid email';
                             }
                             return null;
                           },
                         ),
                         const SizedBox(height: 16),
+
+                        // Password field
                         TextFormField(
                           controller: _passwordController,
                           obscureText: _obscurePassword,
@@ -162,20 +164,22 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ? Icons.visibility_off
                                   : Icons.visibility),
                               onPressed: () => setState(
-                                  () => _obscurePassword = !_obscurePassword),
+                                () => _obscurePassword = !_obscurePassword,
+                              ),
                             ),
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
+                          validator: (v) {
+                            if (v == null || v.isEmpty) {
                               return AppStrings.fieldRequired;
                             }
-                            if (value.length < 6) {
+                            if (v.length < 6) {
                               return 'Password must be at least 6 characters';
                             }
                             return null;
                           },
                         ),
                         const SizedBox(height: 32),
+
                         state is AuthLoading
                             ? const CircularProgressIndicator()
                             : ElevatedButton(

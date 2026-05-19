@@ -5,25 +5,25 @@ import '../../domain/entities/user_entity.dart';
 import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/logout_usecase.dart';
 
-// Events
+// ── Events ──────────────────────────────────────────────────────────────────
 abstract class AuthEvent extends Equatable {
   @override
   List<Object> get props => [];
 }
 
 class LoginRequested extends AuthEvent {
-  final String email;
+  final String username; // was email
   final String password;
 
-  LoginRequested({required this.email, required this.password});
+  LoginRequested({required this.username, required this.password});
 
   @override
-  List<Object> get props => [email, password];
+  List<Object> get props => [username, password];
 }
 
 class LogoutRequested extends AuthEvent {}
 
-// States
+// ── States ──────────────────────────────────────────────────────────────────
 abstract class AuthState extends Equatable {
   @override
   List<Object?> get props => [];
@@ -50,39 +50,29 @@ class AuthFailureState extends AuthState {
 
 class AuthLoggedOut extends AuthState {}
 
-// BLoC
+// ── BLoC ────────────────────────────────────────────────────────────────────
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final LoginUsecase loginUsecase;
   final LogoutUsecase logoutUsecase;
 
-  AuthBloc({
-    required this.loginUsecase,
-    required this.logoutUsecase,
-  }) : super(AuthInitial()) {
-    on<LoginRequested>(_onLoginRequested);
-    on<LogoutRequested>(_onLogoutRequested);
+  AuthBloc({required this.loginUsecase, required this.logoutUsecase})
+      : super(AuthInitial()) {
+    on<LoginRequested>(_onLogin);
+    on<LogoutRequested>(_onLogout);
   }
 
-  Future<void> _onLoginRequested(
-    LoginRequested event,
-    Emitter<AuthState> emit,
-  ) async {
+  Future<void> _onLogin(LoginRequested event, Emitter<AuthState> emit) async {
     emit(AuthLoading());
-
     final result = await loginUsecase(
-      LoginParams(email: event.email, password: event.password),
+      LoginParams(username: event.username, password: event.password),
     );
-
     result.fold(
-      (failure) => emit(AuthFailureState(message: failure.message)),
-      (user) => emit(AuthSuccess(user: user)),
+      (f) => emit(AuthFailureState(message: f.message)),
+      (u) => emit(AuthSuccess(user: u)),
     );
   }
 
-  Future<void> _onLogoutRequested(
-    LogoutRequested event,
-    Emitter<AuthState> emit,
-  ) async {
+  Future<void> _onLogout(LogoutRequested event, Emitter<AuthState> emit) async {
     await logoutUsecase();
     emit(AuthLoggedOut());
   }
