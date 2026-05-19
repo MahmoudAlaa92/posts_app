@@ -1,31 +1,21 @@
-import 'dart:math';
 import '../errors/exceptions.dart';
+import '../utils/hive_helper.dart';
 import 'mock_data.dart';
 
+/// Simulates a real backend API with realistic latency.
+/// Created posts are now persisted to Hive — they survive app restarts.
 class MockService {
   static final MockService _instance = MockService._internal();
   factory MockService() => _instance;
   MockService._internal();
 
-  final _random = Random();
-
-  // Tracks created posts so they appear in the list during the session
-  final List<Map<String, dynamic>> _createdPosts = [];
-  int _nextId = 201;
-
-  /// Simulates network latency between [min] and [max] milliseconds.
-  Future<void> _simulateLatency({int min = 400, int max = 900}) async {
-    final ms = min + _random.nextInt(max - min);
-    await Future.delayed(Duration(milliseconds: ms));
-  }
-
-  // Auth 
+  // ─── Auth ─────────────────────────────────────────────────────────────────
 
   Future<Map<String, dynamic>> login({
     required String username,
     required String password,
   }) async {
-    await _simulateLatency(min: 600, max: 1200);
+    await _delay(600, 1200);
 
     if (username == MockData.mockUsername &&
         password == MockData.mockPassword) {
@@ -36,33 +26,38 @@ class MockService {
         'firstName': 'Emily',
         'lastName': 'Smith',
         'token': MockData.mockToken,
-        'refreshToken': 'mock_refresh_token_abc',
       };
     }
 
     throw const AuthException(message: 'Invalid username or password');
   }
 
-  // Posts 
+  // ─── Posts ────────────────────────────────────────────────────────────────
 
   Future<List<Map<String, dynamic>>> getPosts() async {
-    await _simulateLatency();
-    // Merge static posts + any posts created this session
-    return [...MockData.posts, ..._createdPosts];
+    await _delay(400, 900);
+
+    // Load persisted created posts from Hive
+    final created = HiveHelper.getCreatedPosts();
+
+    // Merge: static mock data + user-created posts
+    return [...MockData.posts, ...created];
   }
 
   Future<Map<String, dynamic>> getPost(int id) async {
-    await _simulateLatency(min: 300, max: 700);
+    await _delay(300, 700);
 
-    // Check session-created posts first
-    final sessionPost = _createdPosts.where((p) => p['id'] == id).firstOrNull;
-    if (sessionPost != null) return sessionPost;
+    // Check persisted created posts first
+    final created = HiveHelper.getCreatedPosts();
+    final fromCreated = created.where((p) => p['id'] == id).firstOrNull;
+    if (fromCreated != null) return fromCreated;
 
-    final post = MockData.posts.where((p) => p['id'] == id).firstOrNull;
-    if (post == null) {
-      throw ServerException(message: 'Post with id $id not found');
-    }
-    return post;
+    // Check static mock data
+    final fromStatic =
+        MockData.posts.where((p) => p['id'] == id).firstOrNull;
+    if (fromStatic != null) return fromStatic;
+
+    throw ServerException(message: 'Post with id $id not found');
   }
 
   Future<Map<String, dynamic>> createPost({
@@ -70,16 +65,34 @@ class MockService {
     required String body,
     required int userId,
   }) async {
-    await _simulateLatency(min: 500, max: 1000);
+    await _delay(500, 1000);
+
+    // Generate a unique ID that won't collide with static posts (which go up to 20)
+    final existing = HiveHelper.getCreatedPosts();
+    final nextId = existing.isEmpty
+        ? 201
+        : (existing.map((p) => p['id'] as int).reduce(
+                (a, b) => a > b ? a : b) +
+            1);
 
     final newPost = {
-      'id': _nextId++,
+      'id': nextId,
       'userId': userId,
       'title': title,
       'body': body,
     };
 
-    _createdPosts.add(newPost); // Persist in session
+    // ✅ Persist to Hive — survives app restarts
+    await HiveHelper.saveCreatedPost(newPost);
+
     return newPost;
+  }
+
+  // ─── Helpers ──────────────────────────────────────────────────────────────
+
+  Future<void> _delay(int minMs, int maxMs) async {
+    final ms = minMs +
+        (DateTime.now().millisecondsSinceEpoch % (maxMs - minMs));
+    await Future.delayed(Duration(milliseconds: ms));
   }
 }
