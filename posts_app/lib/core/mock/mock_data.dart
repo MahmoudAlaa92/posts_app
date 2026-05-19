@@ -1,7 +1,7 @@
 class MockData {
   // Auth
-  static const mockUsername = 'emilys';
-  static const mockPassword = 'emilyspass';
+  static const mockUsername = 'Mahmoud Alaa';
+  static const mockPassword = '12345678';
   static const mockToken =
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9'
       '.eyJpZCI6MSwidXNlcm5hbWUiOiJlbWlseXMiLCJpYXQiOjE3MDAwMDAwMDB9'

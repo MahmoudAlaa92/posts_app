@@ -16,6 +16,6 @@ class AppConstants {
   static const String cachedPostsKey = 'cached_posts';
 
   // Credentials (for demo hint in UI)
-  static const String mockUsername = 'emilys';
-  static const String mockPassword = 'emilyspass';
+  static const String mockUsername = 'Mahmoud Alaa';
+  static const String mockPassword = '12345678';
 }

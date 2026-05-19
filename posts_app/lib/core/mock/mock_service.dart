@@ -22,9 +22,9 @@ class MockService {
       return {
         'id': 1,
         'username': MockData.mockUsername,
-        'email': 'emily.smith@example.com',
-        'firstName': 'Emily',
-        'lastName': 'Smith',
+        'email': 'Mahmoud.Alaa@example.com',
+        'firstName': 'Mahmoud',
+        'lastName': 'Alaa',
         'token': MockData.mockToken,
       };
     }
