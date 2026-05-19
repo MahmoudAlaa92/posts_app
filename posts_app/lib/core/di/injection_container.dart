@@ -19,6 +19,7 @@ import '../../features/posts/domain/usecases/get_post_usecase.dart';
 import '../../features/posts/domain/usecases/get_posts_usecase.dart';
 import '../../features/posts/presentation/bloc/posts_bloc.dart';
 
+import '../mock/mock_service.dart';
 import '../network/dio_client.dart';
 import '../network/network_info.dart';
 import '../utils/hive_helper.dart';
@@ -26,34 +27,28 @@ import '../utils/hive_helper.dart';
 final sl = GetIt.instance;
 
 Future<void> init() async {
-  // Open Hive boxes first
   await HiveHelper.openBoxes();
 
-  //==========================
-  // External
-  //==========================
+  // ── External ────────────────────────────────────────────────
   sl.registerLazySingleton<Dio>(() => DioClient.getInstance());
   sl.registerLazySingleton<Connectivity>(() => Connectivity());
+  sl.registerLazySingleton<MockService>(() => MockService()); // ← NEW
 
-  //==========================
-  // Core
-  //==========================
+  // ── Core ────────────────────────────────────────────────────
   sl.registerLazySingleton<NetworkInfo>(
     () => NetworkInfoImpl(sl<Connectivity>()),
   );
 
-  //==========================
-  // Auth Feature
-  //==========================
-  // Datasources
+  // ── Auth ────────────────────────────────────────────────────
   sl.registerLazySingleton<AuthRemoteDatasource>(
-    () => AuthRemoteDatasourceImpl(dio: sl<Dio>()),
+    () => AuthRemoteDatasourceImpl(
+      dio: sl<Dio>(),
+      mockService: sl<MockService>(), // ← NEW
+    ),
   );
   sl.registerLazySingleton<AuthLocalDatasource>(
     () => AuthLocalDatasourceImpl(),
   );
-
-  // Repository
   sl.registerLazySingleton<AuthRepository>(
     () => AuthRepositoryImpl(
       remoteDatasource: sl<AuthRemoteDatasource>(),
@@ -61,29 +56,23 @@ Future<void> init() async {
       networkInfo: sl<NetworkInfo>(),
     ),
   );
-
-  // Usecases
   sl.registerLazySingleton(() => LoginUsecase(sl<AuthRepository>()));
   sl.registerLazySingleton(() => LogoutUsecase(sl<AuthRepository>()));
-
-  // Bloc
   sl.registerFactory(() => AuthBloc(
         loginUsecase: sl<LoginUsecase>(),
         logoutUsecase: sl<LogoutUsecase>(),
       ));
 
-  //==========================
-  // Posts Feature
-  //==========================
-  // Datasources
+  // ── Posts ───────────────────────────────────────────────────
   sl.registerLazySingleton<PostsRemoteDatasource>(
-    () => PostsRemoteDatasourceImpl(dio: sl<Dio>()),
+    () => PostsRemoteDatasourceImpl(
+      dio: sl<Dio>(),
+      mockService: sl<MockService>(), // ← NEW
+    ),
   );
   sl.registerLazySingleton<PostsLocalDatasource>(
     () => PostsLocalDatasourceImpl(),
   );
-
-  // Repository
   sl.registerLazySingleton<PostsRepository>(
     () => PostsRepositoryImpl(
       remoteDatasource: sl<PostsRemoteDatasource>(),
@@ -91,13 +80,9 @@ Future<void> init() async {
       networkInfo: sl<NetworkInfo>(),
     ),
   );
-
-  // Usecases
   sl.registerLazySingleton(() => GetPostsUsecase(sl<PostsRepository>()));
   sl.registerLazySingleton(() => GetPostUsecase(sl<PostsRepository>()));
   sl.registerLazySingleton(() => CreatePostUsecase(sl<PostsRepository>()));
-
-  // Bloc
   sl.registerFactory(() => PostsBloc(
         getPostsUsecase: sl<GetPostsUsecase>(),
         getPostUsecase: sl<GetPostUsecase>(),
